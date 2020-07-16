@@ -1,0 +1,57 @@
+{
+  "groups": [
+    {
+      "name": "qslv",
+      "type": "qslv.reservation.rest.ConfigProperties",
+      "sourceType": "qslv.reservation.rest.ConfigProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "qslv.aitid",
+      "type": "java.lang.String",
+      "sourceType": "qslv.reservation.rest.ConfigProperties"
+    },
+    {
+      "name": "qslv.rest-ait",
+      "type": "java.lang.String",
+      "sourceType": "qslv.reservation.rest.ConfigProperties"
+    },
+    {
+      "name": "qslv.rest-attempts",
+      "type": "java.lang.Integer",
+      "sourceType": "qslv.reservation.rest.ConfigProperties"
+    },
+    {
+      "name": "qslv.rest-backoff-delay",
+      "type": "java.lang.Integer",
+      "sourceType": "qslv.reservation.rest.ConfigProperties"
+    },
+    {
+      "name": "qslv.rest-backoff-delay-max",
+      "type": "java.lang.Integer",
+      "sourceType": "qslv.reservation.rest.ConfigProperties"
+    },
+    {
+      "name": "qslv.rest-connect-timeout",
+      "type": "java.lang.Integer",
+      "sourceType": "qslv.reservation.rest.ConfigProperties"
+    },
+    {
+      "name": "qslv.rest-connection-request-timeout",
+      "type": "java.lang.Integer",
+      "sourceType": "qslv.reservation.rest.ConfigProperties"
+    },
+    {
+      "name": "qslv.rest-timeout",
+      "type": "java.lang.Integer",
+      "sourceType": "qslv.reservation.rest.ConfigProperties"
+    },
+    {
+      "name": "qslv.transaction-url",
+      "type": "java.lang.String",
+      "sourceType": "qslv.reservation.rest.ConfigProperties"
+    }
+  ],
+  "hints": []
+}
