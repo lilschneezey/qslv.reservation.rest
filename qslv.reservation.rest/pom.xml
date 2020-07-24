@@ -47,7 +47,6 @@
 			<scope>runtime</scope>
 		</dependency>
 
-
 		<dependency>
 			<groupId>io.schneezey</groupId>
 			<artifactId>qslv.interface</artifactId>
