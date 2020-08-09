@@ -1,4 +1,4 @@
-package qslv.reservation.rest;
+package qslv.reservefunds.rest;
 import qslv.transaction.request.ReservationRequest;
 import qslv.transaction.resource.TransactionResource;
 import qslv.transaction.response.ReservationResponse;
@@ -18,12 +18,12 @@ import org.springframework.web.server.ResponseStatusException;
 import qslv.data.Account;
 import qslv.data.DebitCard;
 import qslv.data.OverdraftInstruction;
-import qslv.reservation.request.ReserveFundsRequest;
-import qslv.reservation.response.ReserveFundsResponse;
+import qslv.reservefunds.request.ReserveFundsRequest;
+import qslv.reservefunds.response.ReserveFundsResponse;
 
 @Service
-public class ReservationService {
-	private static final Logger log = LoggerFactory.getLogger(ReservationService.class);
+public class ReserveFundsService {
+	private static final Logger log = LoggerFactory.getLogger(ReserveFundsService.class);
 
 	@Autowired
 	private JdbcDao jdbcDao;
@@ -38,8 +38,8 @@ public class ReservationService {
 		this.trDao = trDao;
 	}
 
-	public ReserveFundsResponse reserveFunds(Map<String, String> callingHeaders, ReserveFundsRequest request, boolean overdraft) {
-		log.debug("service.reserveFunds ENTRY");
+	public ReserveFundsResponse reserveFunds(Map<String, String> callingHeaders, ReserveFundsRequest request) {
+		log.trace("service.reserveFunds ENTRY");
 		
 		if (request.getDebitCardNumber() == null) {
 			Account acctResource = jdbcDao.getAccount(request.getAccountNumber());
@@ -71,6 +71,7 @@ public class ReservationService {
 		treq.setRequestUuid(request.getRequestUUID());
 		treq.setTransactionAmount(request.getTransactionAmount());
 		treq.setTransactionMetaDataJson(request.getTransactionMetaDataJSON());
+		treq.setProtectAgainstOverdraft(true);
 		
 		// ---------------
 		ReservationResponse reservationResponse = trDao.recordReservation(callingHeaders, treq);
@@ -80,12 +81,11 @@ public class ReservationService {
 		response.setTransactions(new LinkedList<TransactionResource>());
 		response.getTransactions().add(reservationResponse.getResource());
 		
-		if (reservationResponse.getStatus() == ReservationResponse.ALREADY_PRESENT ||
-				reservationResponse.getStatus() == ReservationResponse.SUCCESS ) {	
+		if (reservationResponse.getStatus() == ReservationResponse.SUCCESS ) {	
 			response.setStatus(ReserveFundsResponse.SUCCESS);
 		} else {
 			response.setStatus(ReserveFundsResponse.INSUFFICIENT_FUNDS);
-			if ( overdraft ) {
+			if ( request.isProtectAgainstOverdraft() ) {
 				 processOverdraftInstructions( callingHeaders, request, response);
 			}
 		}
@@ -105,6 +105,7 @@ public class ReservationService {
 		treq.setRequestUuid(request.getRequestUUID());
 		treq.setTransactionAmount(request.getTransactionAmount());
 		treq.setTransactionMetaDataJson(request.getTransactionMetaDataJSON());
+		treq.setProtectAgainstOverdraft(true);
 
 		ListIterator<OverdraftInstruction> iter = overdraftInstructions.listIterator();
 		while (iter.hasNext()) {
@@ -117,8 +118,7 @@ public class ReservationService {
 				ReservationResponse reservationResponse = trDao.recordReservation(callingHeaders, treq);
 				response.getTransactions().add(reservationResponse.getResource());
 
-				if (reservationResponse.getStatus() == ReservationResponse.SUCCESS
-						|| reservationResponse.getStatus() == ReservationResponse.ALREADY_PRESENT) {
+				if (reservationResponse.getStatus() == ReservationResponse.SUCCESS) {
 					response.setStatus(ReserveFundsResponse.SUCCESS_OVERDRAFT);
 					log.debug("Overdraft Instruction success. {}", reservationResponse.toString());
 					break;
@@ -133,18 +133,18 @@ public class ReservationService {
 	}
 
 	private boolean debitCardInGoodStanding(DebitCard debitResource) {
-		return (debitResource.getDebitCardLifeCycleStatus() == "EF");
+		return (debitResource.getDebitCardLifeCycleStatus().contentEquals("EF"));
 	}
 
 	private boolean instructionEffective(OverdraftInstruction instruction) {
-		return ( instruction.getInstructionLifecycleStatus() == "EF" &&
+		return ( instruction.getInstructionLifecycleStatus().contentEquals("EF") &&
 				 java.time.LocalDateTime.now().compareTo(instruction.getEffectiveStart()) > 0 &&
 				 ( instruction.getEffectiveEnd() == null ||
 				 java.time.LocalDateTime.now().compareTo(instruction.getEffectiveEnd()) < 0) );
 	}
 
 	private boolean accountInGoodStanding(Account account) {
-		return (account.getAccountLifeCycleStatus() == "EF");
+		return (account.getAccountLifeCycleStatus().contentEquals("EF"));
 	}
 
 }

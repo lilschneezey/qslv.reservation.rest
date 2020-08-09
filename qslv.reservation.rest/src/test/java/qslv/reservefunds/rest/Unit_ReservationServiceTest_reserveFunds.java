@@ -1,4 +1,4 @@
-package qslv.reservation.rest;
+package qslv.reservefunds.rest;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -20,8 +20,8 @@ import org.springframework.web.server.ResponseStatusException;
 import qslv.common.TraceableRequest;
 import qslv.data.Account;
 import qslv.data.DebitCard;
-import qslv.reservation.request.ReserveFundsRequest;
-import qslv.reservation.response.ReserveFundsResponse;
+import qslv.reservefunds.request.ReserveFundsRequest;
+import qslv.reservefunds.response.ReserveFundsResponse;
 import qslv.transaction.request.ReservationRequest;
 import qslv.transaction.resource.TransactionResource;
 import qslv.transaction.response.ReservationResponse;
@@ -34,7 +34,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 	@Mock 
 	JdbcDao debitDao;
 
-	ReservationService service = new ReservationService();
+	ReserveFundsService service = new ReserveFundsService();
 
 	@BeforeEach
 	public void setup() {
@@ -55,6 +55,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		request.setAccountNumber("1234HHHH1234");
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
+		request.setProtectAgainstOverdraft(false);
 
 		Account acct = new Account();
 		acct.setAccountNumber("1234HGJT78934");
@@ -75,7 +76,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		ReservationResponse setupResponse = new ReservationResponse(ReservationResponse.SUCCESS, transaction);
 		doReturn(setupResponse).when(dao).recordReservation(any(), any());
 		
-		ReserveFundsResponse response = service.reserveFunds(headers, request, false);
+		ReserveFundsResponse response = service.reserveFunds(headers, request);
 
 		verify(dao).recordReservation(any(), any());
 		verify(debitDao).getAccount(anyString());
@@ -109,6 +110,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		request.setAccountNumber(null);
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
+		request.setProtectAgainstOverdraft(false);
 
 		DebitCard debitResource = new DebitCard();
 		debitResource.setDebitCardLifeCycleStatus("EF");
@@ -131,7 +133,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		ReservationResponse setupResponse = new ReservationResponse(ReservationResponse.SUCCESS, transaction);
 		when(dao.recordReservation(any(), any(ReservationRequest.class))).thenReturn(setupResponse);
 		
-		ReserveFundsResponse response = service.reserveFunds(headers, request, false);
+		ReserveFundsResponse response = service.reserveFunds(headers, request);
 
 		verify(dao).recordReservation(any(), any(ReservationRequest.class));
 		verify(debitDao).getDebitCardAndAccount(anyString());
@@ -164,6 +166,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		request.setAccountNumber("1234HHHH1234");
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
+		request.setProtectAgainstOverdraft(false);
 
 		Account acct = new Account();
 		acct.setAccountNumber("1234HGJT78934");
@@ -171,7 +174,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		when(debitDao.getAccount(anyString())).thenReturn(acct);
 
 		ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
-			service.reserveFunds(headers, request, false);
+			service.reserveFunds(headers, request);
 		});
 
 		verify(debitDao).getAccount(anyString());
@@ -191,6 +194,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		request.setAccountNumber(null);
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
+		request.setProtectAgainstOverdraft(false);
 
 		DebitCard debitResource = new DebitCard();
 		debitResource.setDebitCardLifeCycleStatus("EF");
@@ -200,7 +204,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		when(debitDao.getDebitCardAndAccount(anyString())).thenReturn(debitResource);
 
 		ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
-			service.reserveFunds(headers, request, false);
+			service.reserveFunds(headers, request);
 		});
 
 		verify(debitDao).getDebitCardAndAccount(anyString());
@@ -220,6 +224,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		request.setDebitCardNumber("67234HFDK78234HJ");
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
+		request.setProtectAgainstOverdraft(false);
 
 		DebitCard debitResource = new DebitCard();
 		debitResource.setDebitCardLifeCycleStatus("CL");
@@ -229,7 +234,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		when(debitDao.getDebitCardAndAccount(anyString())).thenReturn(debitResource);
 
 		ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
-			service.reserveFunds(headers, request, false);
+			service.reserveFunds(headers, request);
 		});
 
 		verify(debitDao).getDebitCardAndAccount(anyString());
@@ -250,6 +255,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		request.setDebitCardNumber("1234HJDF89097HKJT");
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
+		request.setProtectAgainstOverdraft(false);
 
 		DebitCard debitResource = new DebitCard();
 		debitResource.setDebitCardLifeCycleStatus("EF");
@@ -272,7 +278,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		ReservationResponse setupResponse = new ReservationResponse(ReservationResponse.INSUFFICIENT_FUNDS, transaction);
 		when(dao.recordReservation(any(), any())).thenReturn(setupResponse);
 		
-		ReserveFundsResponse response = service.reserveFunds(headers, request, false);
+		ReserveFundsResponse response = service.reserveFunds(headers, request);
 
 		verify(dao).recordReservation(any(), any());
 		verify(debitDao).getDebitCardAndAccount(anyString());
@@ -306,6 +312,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		request.setAccountNumber(null);
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
+		request.setProtectAgainstOverdraft(false);
 
 		DebitCard debitResource = new DebitCard();
 		debitResource.setDebitCardLifeCycleStatus("EF");
@@ -325,11 +332,11 @@ class Unit_ReservationServiceTest_reserveFunds {
 		transaction.setTransactionAmount(-2323L);
 		transaction.setTransactionMetaDataJson("{etc, etc}");
 		transaction.setTransactionTypeCode(TransactionResource.RESERVATION);
-		ReservationResponse setupResponse = new ReservationResponse(ReservationResponse.ALREADY_PRESENT, transaction);
+		ReservationResponse setupResponse = new ReservationResponse(ReservationResponse.SUCCESS, transaction);
 		
 		when(dao.recordReservation(any(), any())).thenReturn(setupResponse);
 		
-		ReserveFundsResponse response = service.reserveFunds(headers, request, false);
+		ReserveFundsResponse response = service.reserveFunds(headers, request);
 
 		verify(dao).recordReservation(any(), any());
 		verify(debitDao).getDebitCardAndAccount(anyString());
@@ -363,6 +370,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 		request.setDebitCardNumber("1234HGJKT7845HDRT");
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
+		request.setProtectAgainstOverdraft(false);
 
 		DebitCard debitResource = new DebitCard();
 		debitResource.setDebitCardLifeCycleStatus("EF");
@@ -375,7 +383,7 @@ class Unit_ReservationServiceTest_reserveFunds {
 			.thenThrow(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "myError"));
 		
 		ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
-			service.reserveFunds(headers, request, false);
+			service.reserveFunds(headers, request);
 		});
 
 		verify(debitDao).getDebitCardAndAccount(anyString());

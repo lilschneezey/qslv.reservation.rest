@@ -1,4 +1,4 @@
-package qslv.reservation.rest;
+package qslv.reservefunds.rest;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,18 +20,18 @@ import org.springframework.web.server.ResponseStatusException;
 
 import qslv.common.TimedResponse;
 import qslv.common.TraceableRequest;
-import qslv.reservation.request.ReserveFundsRequest;
-import qslv.reservation.response.ReserveFundsResponse;
+import qslv.reservefunds.request.ReserveFundsRequest;
+import qslv.reservefunds.response.ReserveFundsResponse;
 import qslv.transaction.resource.TransactionResource;
 
 @ExtendWith(MockitoExtension.class)
 class Unit_ReservationControllerTest_postReserveFunds {
 	@Mock
-	public ReservationService service;
+	public ReserveFundsService service;
 	@Mock
 	public ConfigProperties config;
 
-	ReservationController controller = new ReservationController();
+	ReserveFundsController controller = new ReserveFundsController();
 
 	@BeforeEach
 	public void setup() {
@@ -46,7 +46,7 @@ class Unit_ReservationControllerTest_postReserveFunds {
 		headers.put(TraceableRequest.AIT_ID, "12345");
 		headers.put(TraceableRequest.BUSINESS_TAXONOMY_ID, "7483495");
 		headers.put(TraceableRequest.CORRELATION_ID, "273849273498273498");
-		headers.put(TraceableRequest.ACCEPT_VERSION, "v1");
+		headers.put(TraceableRequest.ACCEPT_VERSION, ReserveFundsRequest.version1_0);
 
 		ReserveFundsRequest request = new ReserveFundsRequest();
 		request.setRequestUUID(UUID.randomUUID());
@@ -70,11 +70,11 @@ class Unit_ReservationControllerTest_postReserveFunds {
 		tr.setTransactionTypeCode(TransactionResource.RESERVATION);
 		setupResponse.setTransactions(Collections.singletonList(tr));
 
-		when(service.reserveFunds(any(), any(), anyBoolean())).thenReturn(setupResponse);
+		when(service.reserveFunds(any(), any())).thenReturn(setupResponse);
 		
 		TimedResponse<ReserveFundsResponse> response = controller.postReserveFunds(headers, request);
 
-		verify(service).reserveFunds(any(), any(), anyBoolean());
+		verify(service).reserveFunds(any(), any());
 		assert (response.getPayload().getStatus() == ReserveFundsResponse.SUCCESS);
 
 		TransactionResource rr = response.getPayload().getTransactions().get(0);
@@ -98,7 +98,7 @@ class Unit_ReservationControllerTest_postReserveFunds {
 		headers.put(TraceableRequest.AIT_ID, "12345");
 		headers.put(TraceableRequest.BUSINESS_TAXONOMY_ID, "7483495");
 		headers.put(TraceableRequest.CORRELATION_ID, "273849273498273498");
-		headers.put(TraceableRequest.ACCEPT_VERSION, "v1");
+		headers.put(TraceableRequest.ACCEPT_VERSION, ReserveFundsRequest.version1_0);
 
 		ReserveFundsRequest request = new ReserveFundsRequest();
 		request.setRequestUUID(UUID.randomUUID());
@@ -106,7 +106,7 @@ class Unit_ReservationControllerTest_postReserveFunds {
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
 		
-		when(service.reserveFunds(any(), any(), anyBoolean()))
+		when(service.reserveFunds(any(), any()))
 			.thenThrow(new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "garbage"));
 
 		ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> {
@@ -150,7 +150,7 @@ class Unit_ReservationControllerTest_postReserveFunds {
 		assert (ex.getStatus() == HttpStatus.BAD_REQUEST);
 
 		// --- add Version
-		headers.put(TraceableRequest.ACCEPT_VERSION, "v1");
+		headers.put(TraceableRequest.ACCEPT_VERSION, ReserveFundsRequest.version1_0);
 		ex = assertThrows(ResponseStatusException.class, () -> {
 			controller.postReserveFunds(headers, request);
 		});
@@ -197,7 +197,7 @@ class Unit_ReservationControllerTest_postReserveFunds {
 		// --- all clear
 		ReserveFundsResponse setupResponse = new ReserveFundsResponse();
 		setupResponse.setStatus(ReserveFundsResponse.SUCCESS);
-		when(service.reserveFunds(any(), any(), anyBoolean())).thenReturn(setupResponse);
+		when(service.reserveFunds(any(), any())).thenReturn(setupResponse);
 
 		TimedResponse<ReserveFundsResponse> response = controller.postReserveFunds(headers, request);
 		assertNotNull( response.getPayload() );

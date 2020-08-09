@@ -1,4 +1,4 @@
-package qslv.reservation.rest;
+package qslv.reservefunds.rest;
 
 import java.util.Map;
 
@@ -12,8 +12,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import qslv.common.TimedResponse;
 import qslv.common.TraceableRequest;
-import qslv.reservation.request.ReserveFundsRequest;
-import qslv.reservation.response.ReserveFundsResponse;
+import qslv.reservefunds.request.ReserveFundsRequest;
+import qslv.reservefunds.response.ReserveFundsResponse;
 import qslv.util.LogRequestTracingData;
 import qslv.util.ServiceElapsedTimeSLI;
 
@@ -33,18 +33,18 @@ import qslv.util.ServiceElapsedTimeSLI;
  */
 
 @RestController
-public class ReservationController {
-	private static final Logger log = LoggerFactory.getLogger(ReservationController.class);
+public class ReserveFundsController {
+	private static final Logger log = LoggerFactory.getLogger(ReserveFundsController.class);
 
 	@Autowired
 	public ConfigProperties config;
 	@Autowired
-	private ReservationService service;
+	private ReserveFundsService service;
 
 	public void setConfig(ConfigProperties config) {
 		this.config = config;
 	}
-	public void setService(ReservationService service) {
+	public void setService(ReserveFundsService service) {
 		this.service = service;
 	}
 	
@@ -56,22 +56,11 @@ public class ReservationController {
 			final @RequestBody ReserveFundsRequest request) {
 		validateHeaders(headers);
 		validateReserveFundsRequest(request);
-		ReserveFundsResponse answer = service.reserveFunds(headers, request, false);
-
-		TimedResponse<ReserveFundsResponse> response = new TimedResponse<ReserveFundsResponse>();
-		response.setPayload(answer);
-		return response;
-	}
-	
-	@PostMapping("/ReserveFundsWithOverdraft")
-	@ResponseStatus(HttpStatus.OK)
-	@LogRequestTracingData(value="POST/ReserveFundsWithOverdraft", ait = "33333")
-	@ServiceElapsedTimeSLI(value="POST/ReserveFundsWithOverdraft", injectResponse = true, ait = "44444")
-	public TimedResponse<ReserveFundsResponse> postReserveFundsWithOverdraft(final @RequestHeader Map<String, String> headers,
-			final @RequestBody ReserveFundsRequest request) {
-		validateHeaders(headers);
-		validateReserveFundsRequest(request);
-		ReserveFundsResponse answer = service.reserveFunds(headers, request, true);
+		if ( false == headers.get(TraceableRequest.ACCEPT_VERSION).equals(ReserveFundsRequest.version1_0) ) {
+			log.error("controller.postReserveFunds, Malformed Request. Invalid version {}", headers.get(TraceableRequest.ACCEPT_VERSION));
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid version "+ headers.get(TraceableRequest.ACCEPT_VERSION));			
+		}
+		ReserveFundsResponse answer = service.reserveFunds(headers, request);
 
 		TimedResponse<ReserveFundsResponse> response = new TimedResponse<ReserveFundsResponse>();
 		response.setPayload(answer);
@@ -79,7 +68,7 @@ public class ReservationController {
 	}
 
 	private void validateReserveFundsRequest(ReserveFundsRequest request) {
-		log.debug("validateReserveFundsRequest ENTRY");
+		log.trace("validateReserveFundsRequest ENTRY");
 		if (request.getRequestUUID() == null) {
 			log.error("controller.validateTransactionRequest, Malformed Request. Missing request_uuid");
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing request_uuid");
@@ -109,23 +98,23 @@ public class ReservationController {
 	}
 
 	private void validateHeaders(Map<String, String> headerMap) {
-		log.debug("validateHeaders ENTRY");
+		log.trace("validateHeaders ENTRY");
 
 		if (headerMap.get(TraceableRequest.AIT_ID) == null) {
-			log.error("controller.validateHeaders, Malformed Request. Missing header variable ait-id");
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing header variable ait-id");
+			log.error("controller.validateHeaders, Malformed Request. Missing header variable {}", TraceableRequest.AIT_ID);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing header variable "+TraceableRequest.AIT_ID);
 		}
 		if (headerMap.get(TraceableRequest.BUSINESS_TAXONOMY_ID) == null) {
-			log.error("controller.validateHeaders, Malformed Request. Missing header variable business-taxonomy-id");
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing header variable business-taxonomy-id");
+			log.error("controller.validateHeaders, Malformed Request. Missing header variable {}", TraceableRequest.BUSINESS_TAXONOMY_ID);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing header variable "+TraceableRequest.BUSINESS_TAXONOMY_ID);
 		}
 		if (headerMap.get(TraceableRequest.CORRELATION_ID) == null) {
-			log.error("controller.validateHeaders, Malformed Request. Missing header variable correlation-id");
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing header variable correlation-id");
+			log.error("controller.validateHeaders, Malformed Request. Missing header variable {}", TraceableRequest.CORRELATION_ID);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing header variable " + TraceableRequest.CORRELATION_ID);
 		}
 		if (headerMap.get(TraceableRequest.ACCEPT_VERSION) == null) {
-			log.error("controller.validateHeaders, Malformed Request. Missing header variable accept-version");
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing header variable accept-version");
+			log.error("controller.validateHeaders, Malformed Request. Missing header variable {}", TraceableRequest.ACCEPT_VERSION);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing header variable "+ TraceableRequest.ACCEPT_VERSION);
 		}	}
 
 }

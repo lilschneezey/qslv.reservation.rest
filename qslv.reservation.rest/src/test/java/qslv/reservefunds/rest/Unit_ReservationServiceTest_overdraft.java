@@ -1,4 +1,4 @@
-package qslv.reservation.rest;
+package qslv.reservefunds.rest;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,8 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import qslv.common.TraceableRequest;
 import qslv.data.Account;
 import qslv.data.OverdraftInstruction;
-import qslv.reservation.request.ReserveFundsRequest;
-import qslv.reservation.response.ReserveFundsResponse;
+import qslv.reservefunds.request.ReserveFundsRequest;
+import qslv.reservefunds.response.ReserveFundsResponse;
 import qslv.transaction.request.ReservationRequest;
 import qslv.transaction.resource.TransactionResource;
 import qslv.transaction.response.ReservationResponse;
@@ -34,7 +34,7 @@ class Unit_ReservationServiceTest_overdraft {
 	@Mock 
 	JdbcDao debitDao;
 
-	ReservationService service = new ReservationService();
+	ReserveFundsService service = new ReserveFundsService();
 
 	@BeforeEach
 	public void setup() {
@@ -57,6 +57,7 @@ class Unit_ReservationServiceTest_overdraft {
 		request.setAccountNumber("1234HHHH1234");
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
+		request.setProtectAgainstOverdraft(true);
 
 		// -------------------
 		Account acct = new Account();
@@ -118,7 +119,7 @@ class Unit_ReservationServiceTest_overdraft {
 			.thenReturn(a2response);
 	
 		// -------------
-		ReserveFundsResponse response = service.reserveFunds(headers, request, true);
+		ReserveFundsResponse response = service.reserveFunds(headers, request);
 
 		// -------------
 		verify(dao, times(2) ).recordReservation(any(), any(ReservationRequest.class));
@@ -168,6 +169,7 @@ class Unit_ReservationServiceTest_overdraft {
 		request.setAccountNumber("1234HHHH1234");
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
+		request.setProtectAgainstOverdraft(true);
 
 		// -------------------
 		Account acct = new Account();
@@ -206,7 +208,7 @@ class Unit_ReservationServiceTest_overdraft {
 			.thenReturn(a1response);
 	
 		// -------------
-		ReserveFundsResponse response = service.reserveFunds(headers, request, true);
+		ReserveFundsResponse response = service.reserveFunds(headers, request);
 
 		// -------------
 		verify(dao).recordReservation(any(), any(ReservationRequest.class));
@@ -244,6 +246,7 @@ class Unit_ReservationServiceTest_overdraft {
 		request.setAccountNumber("1234HHHH1234");
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
+		request.setProtectAgainstOverdraft(true);
 
 		// -------------------
 		Account acct = new Account();
@@ -282,7 +285,7 @@ class Unit_ReservationServiceTest_overdraft {
 			.thenReturn(a1response);
 	
 		// -------------
-		ReserveFundsResponse response = service.reserveFunds(headers, request, true);
+		ReserveFundsResponse response = service.reserveFunds(headers, request);
 
 		// -------------
 		verify(dao).recordReservation(any(), any(ReservationRequest.class));
@@ -319,6 +322,7 @@ class Unit_ReservationServiceTest_overdraft {
 		request.setAccountNumber("1234HHHH1234");
 		request.setTransactionAmount(27384);
 		request.setTransactionMetaDataJSON("{}");
+		request.setProtectAgainstOverdraft(true);
 
 		// -------------------
 		Account acct = new Account();
@@ -394,7 +398,7 @@ class Unit_ReservationServiceTest_overdraft {
 			.thenReturn(a3response);
 	
 		// -------------
-		ReserveFundsResponse response = service.reserveFunds(headers, request, true);
+		ReserveFundsResponse response = service.reserveFunds(headers, request);
 
 		// -------------
 		verify(dao, times(3) ).recordReservation(any(), any(ReservationRequest.class));

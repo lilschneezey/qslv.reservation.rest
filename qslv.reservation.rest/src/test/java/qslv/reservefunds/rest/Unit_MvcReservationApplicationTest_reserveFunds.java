@@ -1,4 +1,4 @@
-package qslv.reservation.rest;
+package qslv.reservefunds.rest;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -13,6 +13,7 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -44,8 +45,8 @@ import qslv.common.TimedResponse;
 import qslv.common.TraceableRequest;
 import qslv.data.Account;
 import qslv.data.DebitCard;
-import qslv.reservation.request.ReserveFundsRequest;
-import qslv.reservation.response.ReserveFundsResponse;
+import qslv.reservefunds.request.ReserveFundsRequest;
+import qslv.reservefunds.response.ReserveFundsResponse;
 import qslv.transaction.request.ReservationRequest;
 import qslv.transaction.resource.TransactionResource;
 import qslv.transaction.response.ReservationResponse;
@@ -62,7 +63,9 @@ class Unit_MvcReservationApplicationTest_reserveFunds {
 	
 	public TypeReference<TimedResponse<ReserveFundsResponse>> responseReference = 
 			new TypeReference<TimedResponse<ReserveFundsResponse>>() {};
-			
+	
+	static String URL = "myurl";
+	
 	@Autowired
 	private MockMvc mockMvc;
 	@Autowired
@@ -79,6 +82,7 @@ class Unit_MvcReservationApplicationTest_reserveFunds {
 
 	@BeforeEach
 	void setup() {
+		config.setReservationUrl(URL);
 		dao.setTemplate(restTemplate);
 		jdbcDao.setJdbcTemplate(jdbcTemplate);
 	}
@@ -125,7 +129,7 @@ class Unit_MvcReservationApplicationTest_reserveFunds {
 		ResponseEntity<TimedResponse<ReservationResponse>> trr = 
 			new ResponseEntity<TimedResponse<ReservationResponse>>(rr, HttpStatus.OK);
 		
-		when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), 
+		when(restTemplate.exchange(eq(URL), eq(HttpMethod.POST), 
 				ArgumentMatchers.<HttpEntity<ReservationRequest>>any(), 
 				ArgumentMatchers.<ParameterizedTypeReference<TimedResponse<ReservationResponse>>>any()))
 			.thenReturn(trr);
@@ -137,7 +141,7 @@ class Unit_MvcReservationApplicationTest_reserveFunds {
 				.header(TraceableRequest.AIT_ID, "2345")
 				.header(TraceableRequest.BUSINESS_TAXONOMY_ID, "2342")
 				.header(TraceableRequest.CORRELATION_ID, "234234")
-				.header(TraceableRequest.ACCEPT_VERSION, "v1") )
+				.header(TraceableRequest.ACCEPT_VERSION, ReserveFundsRequest.version1_0) )
 				.andExpect(status().isOk())
 				.andReturn()
 				.getResponse()
@@ -165,6 +169,44 @@ class Unit_MvcReservationApplicationTest_reserveFunds {
 		assertTrue(tr.getTransactionUuid().equals(rr.getPayload().getResource().getTransactionUuid()));
 		assertTrue(tr.getRunningBalanceAmount() == rr.getPayload().getResource().getRunningBalanceAmount() );
 		assertTrue(tr.getTransactionAmount() == request.getTransactionAmount());
+	}
+	
+	@Test
+	void testPostTransaction_debit_noAccountRows() throws Exception {
+		// ---------------------
+		ReserveFundsRequest request = new ReserveFundsRequest();
+		request.setAccountNumber(null);
+		request.setDebitCardNumber("8398345345");
+		request.setRequestUUID(UUID.randomUUID());
+		request.setTransactionAmount(-2323L);
+		request.setTransactionMetaDataJSON("{\"intvalue\":829342}");
+		
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
+		String requestJson = mapper.writer().withDefaultPrettyPrinter().writeValueAsString(request);
+
+		//--Jdbc Debit Card and Account
+
+		when(jdbcTemplate.query( eq(JdbcDao.getDebitCardData_sql), ArgumentMatchers.<RowMapper<DebitCard>>any(), 
+				eq(request.getDebitCardNumber()) ) ).thenReturn(new ArrayList<DebitCard>());
+	
+		// post transaction
+		String errorMessage = this.mockMvc.perform(post("/ReserveFunds")
+				.contentType(APPLICATION_JSON_UTF8)
+				.content(requestJson)
+				.header(TraceableRequest.AIT_ID, "2345")
+				.header(TraceableRequest.BUSINESS_TAXONOMY_ID, "2342")
+				.header(TraceableRequest.CORRELATION_ID, "234234")
+				.header(TraceableRequest.ACCEPT_VERSION, ReserveFundsRequest.version1_0) )
+				.andExpect(status().isInternalServerError())
+				.andReturn()
+				.getResponse()
+				.getErrorMessage();
+		
+		verify(jdbcTemplate).query( eq(JdbcDao.getDebitCardData_sql), ArgumentMatchers.<RowMapper<DebitCard>>any(), 
+				eq(request.getDebitCardNumber()) );
+		
+		assertTrue(errorMessage.contains("account - debit_card rows returned"));
 	}
 	
 	@Test
@@ -210,7 +252,7 @@ class Unit_MvcReservationApplicationTest_reserveFunds {
 		ResponseEntity<TimedResponse<ReservationResponse>> trr = 
 			new ResponseEntity<TimedResponse<ReservationResponse>>(rr, HttpStatus.OK);
 		
-		when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), 
+		when(restTemplate.exchange(eq(URL), eq(HttpMethod.POST), 
 				ArgumentMatchers.<HttpEntity<ReservationRequest>>any(), 
 				ArgumentMatchers.<ParameterizedTypeReference<TimedResponse<ReservationResponse>>>any()))
 			.thenThrow(new ResourceAccessException("message", new SocketTimeoutException() ) )
@@ -227,7 +269,7 @@ class Unit_MvcReservationApplicationTest_reserveFunds {
 				.header(TraceableRequest.AIT_ID, "2345")
 				.header(TraceableRequest.BUSINESS_TAXONOMY_ID, "2342")
 				.header(TraceableRequest.CORRELATION_ID, "234234")
-				.header(TraceableRequest.ACCEPT_VERSION, "v1") )
+				.header(TraceableRequest.ACCEPT_VERSION, ReserveFundsRequest.version1_0) )
 				.andExpect(status().isOk())
 				.andReturn()
 				.getResponse()

@@ -1,4 +1,4 @@
-package qslv.reservation.rest;
+package qslv.reservefunds.rest;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -8,9 +8,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
 
 import qslv.data.Account;
 import qslv.data.DebitCard;
@@ -51,7 +53,14 @@ public class JdbcDao {
 					}
 				}, debitCardNumber);
 		
-		log.debug("getDebitCardAccount  {}", resources.get(0));
+		if ( resources == null || resources.size() != 1 ) {
+			log.error("setupAccount, ERROR=%d rows returned, SQL=%s", resources.size(), getDebitCardData_sql);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+					String.format("%d (!= 1) account - debit_card rows returned.", resources.size()));
+		}
+		
+		log.debug("getDebitCardAccount DebitCard {} {}", resources.get(0).getDebitCardNumber(), resources.get(0).getDebitCardLifeCycleStatus(),
+				resources.get(0).getAccount().getAccountNumber(), resources.get(0).getAccount().getAccountLifeCycleStatus());
 		return resources.get(0);
 	}
 
@@ -61,7 +70,7 @@ public class JdbcDao {
 	public Account getAccount(final String accountNumber) {
 		log.debug("getAccount ENTRY {}", accountNumber);
 
-		List<Account> resources = jdbcTemplate.query(getDebitCardData_sql,
+		List<Account> resources = jdbcTemplate.query(getAccount_sql,
 				new RowMapper<Account>() {
 					public Account mapRow(ResultSet rs, int rowNum) throws SQLException {
 						Account res = new Account();
@@ -72,7 +81,13 @@ public class JdbcDao {
 					}
 				}, accountNumber);
 		
-		log.debug("getDebitCardAccountJoin  {}", resources.get(0));
+		if ( resources == null || resources.size() != 1 ) {
+			log.error("setupAccount, ERROR=%d rows returned, SQL=%s", resources.size(), getAccount_sql);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+					String.format("%d (!= 1) account_balance rows returned.", resources.size()));
+		}
+		
+		log.debug("getAccount EXIT {} {}", resources.get(0).getAccountNumber(), resources.get(0).getAccountLifeCycleStatus());
 		return resources.get(0);
 	}
 	
@@ -80,7 +95,8 @@ public class JdbcDao {
 			"SELECT o.overdraft_account_no, oda.lifecycle_status_cd as od_lifecycle_status, o.lifecycle_status_cd, o.effective_start_dt, o.effective_end_dt"
 			+ " FROM overdraft_instruction o, account oda"
 			+ " WHERE o.account_no = ?"
-			+ " AND o.overdraft_account_no = oda.account_no;";
+			+ " AND o.overdraft_account_no = oda.account_no"
+			+ " ORDER BY o.sequence asc;";
 	
 	public List<OverdraftInstruction> getOverdraftInstructions(final String accountNumber) {
 		log.debug("getOverdraftInstructions ENTRY {}", accountNumber);
@@ -100,6 +116,11 @@ public class JdbcDao {
 					}
 				}, accountNumber);
 		
+		if ( resources == null || resources.size() == 0 ) {
+			log.error("setupAccount, ERROR=%d rows returned, SQL=%s", resources.size(), getOverdraftInstructions_sql);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+					String.format("%d (!= 1) account_balance rows returned.", resources.size()));
+		}
 
 		log.debug("getOverdraftInstructions size {}", resources.size());
 		return resources;
