@@ -1,8 +1,7 @@
-package qslv.reservation.rest;
+package qslv.reservefunds.rest;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.net.SocketTimeoutException;
@@ -35,15 +34,20 @@ import qslv.transaction.response.ReservationResponse;
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
 class Unit_TransactionDao {
+	private static String URL="myurl";
 
 	@Mock
 	RestTemplate template;
 	
 	@Autowired
 	TransactionDao transactionDao;
+	ConfigProperties config = new ConfigProperties();
 
 	@BeforeEach
 	public void init() {
+		config.setReservationUrl(URL);
+		config.setRestAttempts(3);
+		transactionDao.setConfig(config);
 		transactionDao.setTemplate(template);
 	}
 	
@@ -70,7 +74,7 @@ class Unit_TransactionDao {
 			new ResponseEntity<TimedResponse<ReservationResponse>>(rr, HttpStatus.OK);
 		
 		//-----------------
-		when(template.exchange(anyString(), eq(HttpMethod.POST), 
+		when(template.exchange(eq(URL), eq(HttpMethod.POST),
 				ArgumentMatchers.<HttpEntity<ReservationRequest>>any(), 
 				ArgumentMatchers.<ParameterizedTypeReference<TimedResponse<ReservationResponse>>>any()))
 			.thenReturn(response);
@@ -102,7 +106,7 @@ class Unit_TransactionDao {
 		ResponseEntity<TimedResponse<ReservationResponse>> response = 
 			new ResponseEntity<TimedResponse<ReservationResponse>>(rr, HttpStatus.OK);
 		//-----------------
-		when(template.exchange(anyString(), eq(HttpMethod.POST), 
+		when(template.exchange(eq(URL), eq(HttpMethod.POST), 
 				ArgumentMatchers.<HttpEntity<ReservationRequest>>any(), 
 				ArgumentMatchers.<ParameterizedTypeReference<TimedResponse<ReservationResponse>>>any()))
 			.thenThrow(new ResourceAccessException("message", new SocketTimeoutException()) )
@@ -136,7 +140,7 @@ class Unit_TransactionDao {
 			new ResponseEntity<TimedResponse<ReservationResponse>>(rr, HttpStatus.OK);
 		
 		//-----------------
-		when(template.exchange(anyString(), eq(HttpMethod.POST), 
+		when(template.exchange(eq(URL), eq(HttpMethod.POST), 
 				ArgumentMatchers.<HttpEntity<ReservationRequest>>any(), 
 				ArgumentMatchers.<ParameterizedTypeReference<TimedResponse<ReservationResponse>>>any()))
 			.thenThrow(new ResourceAccessException("message", new SocketTimeoutException()) )
@@ -164,7 +168,7 @@ class Unit_TransactionDao {
 		request.setTransactionMetaDataJson("{}");
 		
 		//-----------------
-		when(template.exchange(anyString(), eq(HttpMethod.POST), 
+		when(template.exchange(eq(URL), eq(HttpMethod.POST), 
 				ArgumentMatchers.<HttpEntity<ReservationRequest>>any(), 
 				ArgumentMatchers.<ParameterizedTypeReference<TimedResponse<ReservationResponse>>>any()))
 			.thenThrow(new ResourceAccessException("message", new SocketTimeoutException()) )

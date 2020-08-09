@@ -1,4 +1,4 @@
-package qslv.reservation.rest;
+package qslv.reservefunds.rest;
 
 import java.util.Collections;
 import java.util.Map;
@@ -58,13 +58,13 @@ public class TransactionDao {
 			response = retryTemplate.execute(new RetryCallback<ResponseEntity<TimedResponse<ReservationResponse>>, ResourceAccessException>() {
 					public ResponseEntity<TimedResponse<ReservationResponse>> doWithRetry( RetryContext context) throws ResourceAccessException {
 						return restTimer.logElapsedTime(() -> {
-							return restTemplate.exchange(config.getTransactionUrl(), HttpMethod.POST, 
+							return restTemplate.exchange(config.getReservationUrl(), HttpMethod.POST, 
 									new HttpEntity<ReservationRequest>(request, buildHeaders(callingHeaders)), typeReference);
 						});
 				} });
 		} 
 		catch (ResourceAccessException ex ) {
-			String msg = String.format("HTTP POST to URL %s with %d retries failed.", config.getTransactionUrl(), config.getRestAttempts());
+			String msg = String.format("HTTP POST to URL %s with %d retries failed.", config.getReservationUrl(), config.getRestAttempts());
 			log.warn("recordTransaction EXIT {}", msg);
 			throw ex;
 		}
@@ -85,6 +85,7 @@ public class TransactionDao {
 		headers.add(TraceableRequest.AIT_ID, config.getAitid());
 		headers.add(TraceableRequest.BUSINESS_TAXONOMY_ID, callingHeaders.get(TraceableRequest.BUSINESS_TAXONOMY_ID));
 		headers.add(TraceableRequest.CORRELATION_ID, callingHeaders.get(TraceableRequest.CORRELATION_ID));
+		headers.add(TraceableRequest.ACCEPT_VERSION, ReservationRequest.VERSION_1_0);
 		return headers;
 	}
 }

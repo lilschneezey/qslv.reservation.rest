@@ -1,4 +1,4 @@
-package qslv.reservation.rest;
+package qslv.reservefunds.rest;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -9,7 +9,7 @@ import qslv.util.EnableQuickSilver;
 @EnableQuickSilver
 public class ConfigProperties {
 	private String aitid = "27834";
-	private String transactionUrl;
+	private String reservationUrl;
 	private int restConnectionRequestTimeout = 1000;
 	private int restConnectTimeout = 1000;
 	private int restTimeout = 1000;
@@ -24,15 +24,6 @@ public class ConfigProperties {
 
 	public void setAitid(String aitid) {
 		this.aitid = aitid;
-	}
-
-
-	public String getTransactionUrl() {
-		return transactionUrl;
-	}
-
-	public void setTransactionUrl(String transactionUrl) {
-		this.transactionUrl = transactionUrl;
 	}
 	
 	public int getRestConnectionRequestTimeout() {
@@ -89,6 +80,14 @@ public class ConfigProperties {
 
 	public void setRestAit(String restAit) {
 		this.restAit = restAit;
+	}
+
+	public String getReservationUrl() {
+		return reservationUrl;
+	}
+
+	public void setReservationUrl(String reservationUrl) {
+		this.reservationUrl = reservationUrl;
 	}
 	
 }

@@ -1,4 +1,4 @@
-package qslv.reservation.rest;
+package qslv.reservefunds.rest;
 
 import java.util.Collections;
 
@@ -51,7 +51,7 @@ public class RestConfig {
 	@Bean
 	public RestClientElapsedTimeSLILogger restTimer() {
 		return new RestClientElapsedTimeSLILogger(LoggerFactory.getLogger(TransactionDao.class), config.getAitid(), 
-				config.getTransactionUrl(), config.getRestAit(),
+				config.getReservationUrl(), config.getRestAit(),
 				Collections.singletonList(ResourceAccessException.class)); 
 	}
 }
