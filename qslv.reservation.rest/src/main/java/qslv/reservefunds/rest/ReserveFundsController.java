@@ -50,8 +50,8 @@ public class ReserveFundsController {
 	
 	@PostMapping("/ReserveFunds")
 	@ResponseStatus(HttpStatus.OK)
-	@LogRequestTracingData(value="POST/ReserveFunds", ait = "33333")
-	@ServiceElapsedTimeSLI(value="POST/ReserveFunds", injectResponse = true, ait = "44444")
+	@LogRequestTracingData(value="POST/ReserveFunds", ait = "#{@configProperties.aitid}")
+	@ServiceElapsedTimeSLI(value="POST/ReserveFunds", injectResponse = true, ait = "#{@configProperties.aitid}")
 	public TimedResponse<ReserveFundsResponse> postReserveFunds(final @RequestHeader Map<String, String> headers,
 			final @RequestBody ReserveFundsRequest request) {
 		validateHeaders(headers);

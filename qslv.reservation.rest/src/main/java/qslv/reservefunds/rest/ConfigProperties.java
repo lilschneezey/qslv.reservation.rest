@@ -16,7 +16,7 @@ public class ConfigProperties {
 	private int restAttempts = 3;
 	private int restBackoffDelay = 100;
 	private int restBackoffDelayMax = 500; 
-	private String restAit = "8938293";
+	private String restAit;
 
 	public String getAitid() {
 		return aitid;

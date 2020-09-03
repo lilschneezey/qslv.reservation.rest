@@ -35,7 +35,7 @@ public class JdbcDao {
 			+ " FROM debit_card d, account a "
 			+ " WHERE a.account_no = d.account_no AND debit_card_no = ?; ";
 
-	@ExternalResourceSLI(value="jdbc::AccountDB", ait = "88888", remoteFailures= {DataAccessException.class})
+	@ExternalResourceSLI(value="jdbc::AccountDB", ait = "#{@configProperties.aitid}", remoteFailures= {DataAccessException.class})
 	public DebitCard getDebitCardAndAccount(final String debitCardNumber) {
 		log.debug("getDebitCardAccount ENTRY {}", debitCardNumber);
 
@@ -66,7 +66,7 @@ public class JdbcDao {
 
 	public final static String getAccount_sql = "SELECT account_no, lifecycle_status_cd FROM account WHERE account_no = ?; ";
 
-	@ExternalResourceSLI(value="jdbc::AccountDB", ait = "88888", remoteFailures= {DataAccessException.class})
+	@ExternalResourceSLI(value="jdbc::AccountDB", ait = "#{@configProperties.aitid}", remoteFailures= {DataAccessException.class})
 	public Account getAccount(final String accountNumber) {
 		log.debug("getAccount ENTRY {}", accountNumber);
 
